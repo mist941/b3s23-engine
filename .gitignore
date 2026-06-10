@@ -1,0 +1,23 @@
+# Compiled binaries
+engined.exe
+/engine/engined.exe
+*.exe
+
+# SQLite database + WAL sidecars
+*.db
+*.db-wal
+*.db-shm
+
+# Node / UI
+node_modules/
+ui/dist/
+.vite/
+
+# Test / coverage output
+*.out
+coverage.txt
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/

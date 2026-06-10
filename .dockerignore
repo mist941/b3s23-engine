@@ -1,0 +1,13 @@
+.git
+.gitignore
+*.md
+Dockerfile
+docker-compose.yml
+
+ui/node_modules
+ui/dist
+ui/.vite
+
+*.db
+*.db-wal
+*.db-shm
