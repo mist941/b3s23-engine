@@ -1,0 +1,19 @@
+services:
+  engine:
+    container_name: b3s23-engine
+    build:
+      context: .
+    ports:
+      - "8050:8050"
+    volumes:
+      - engine_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "engined", "-healthcheck", "-addr", ":8050"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  engine_data:
