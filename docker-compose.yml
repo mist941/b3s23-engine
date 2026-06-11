@@ -1,19 +1,15 @@
 services:
   engine:
-    container_name: b3s23-engine
+    image: mist941/b3s23-engine:latest
     build:
       context: .
+    container_name: b3s23-engine
     ports:
       - "8050:8050"
     volumes:
       - engine_data:/data
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "engined", "-healthcheck", "-addr", ":8050"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+    # The healthcheck is inherited from the image.
 
 volumes:
   engine_data:

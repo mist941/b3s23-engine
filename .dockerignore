@@ -1,6 +1,10 @@
 .git
 .gitignore
+.github
+.claude
+.dockerignore
 *.md
+LICENSE
 Dockerfile
 docker-compose.yml
 
@@ -8,6 +12,7 @@ ui/node_modules
 ui/dist
 ui/.vite
 
+*.exe
 *.db
 *.db-wal
 *.db-shm

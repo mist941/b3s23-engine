@@ -1,6 +1,3 @@
-// Command engined runs the B3S23 (Game of Life) engine: the simulation loop,
-// SQLite snapshot persistence, and the HTTP + WebSocket API. It is the only
-// composition root — all wiring lives here, all logic lives in internal/.
 package main
 
 import (
@@ -24,8 +21,16 @@ import (
 	"github.com/mist941/b3s23-engine/engine/internal/wsapi"
 )
 
+// version is stamped at build time via -ldflags "-X main.version=...".
+var version = "dev"
+
 func main() {
-	cfg, logLevel, healthcheck := parseFlags()
+	cfg, logLevel, healthcheck, showVersion := parseFlags()
+
+	if showVersion {
+		fmt.Println("engined", version)
+		return
+	}
 
 	// Health-probe mode: used by the container HEALTHCHECK. The distroless image
 	// has no shell or curl, so the binary probes itself and exits 0/1.
@@ -113,7 +118,7 @@ func run(cfg config.Config, logger *slog.Logger) error {
 
 	serveErr := make(chan error, 1)
 	go func() {
-		logger.Info("engine listening", "addr", cfg.Addr, "db", cfg.DBPath)
+		logger.Info("engine listening", "addr", cfg.Addr, "db", cfg.DBPath, "version", version)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serveErr <- err
 		}
@@ -143,13 +148,15 @@ func run(cfg config.Config, logger *slog.Logger) error {
 	return nil
 }
 
-func parseFlags() (config.Config, slog.Level, bool) {
+func parseFlags() (config.Config, slog.Level, bool, bool) {
 	cfg := config.Default()
 	var (
 		seed        int64
 		logLevel    string
 		healthcheck bool
+		showVersion bool
 	)
+	flag.BoolVar(&showVersion, "version", false, "print version and exit")
 	flag.BoolVar(&healthcheck, "healthcheck", false, "probe /api/v1/healthz and exit 0 (healthy) or 1")
 	flag.StringVar(&cfg.Addr, "addr", cfg.Addr, "HTTP listen address")
 	flag.StringVar(&cfg.DBPath, "db", cfg.DBPath, "SQLite database path")
@@ -171,7 +178,7 @@ func parseFlags() (config.Config, slog.Level, bool) {
 	flag.Parse()
 
 	cfg.RngSeed = uint64(seed)
-	return cfg, parseLevel(logLevel), healthcheck
+	return cfg, parseLevel(logLevel), healthcheck, showVersion
 }
 
 func parseLevel(s string) slog.Level {
