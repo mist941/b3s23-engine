@@ -78,6 +78,7 @@ func (h *Hub) Publish(item engine.BroadcastItem) {
 			c.q.pushGrid(it)
 		} else if !c.q.pushControl(it) {
 			c.cleanup()
+		}
 	}
 }
 
