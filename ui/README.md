@@ -52,7 +52,7 @@ http://localhost:8050 alongside the API (`engined -static /ui`).
 
 ## Controls
 
-- **Play / Pause / Step** (step is paused-only) · **Reset** · **Snapshot**
+- **Play / Pause / Step** (step is paused-only) · **Reset**
 - **Probability** slider → **Reseed** (new epoch, generation 0)
 - **Tick rate** (generations/second) and **Stream every N** (WebSocket frame rate)
 - **Size** (width × height) — pauses, starts a new epoch, reseeds
