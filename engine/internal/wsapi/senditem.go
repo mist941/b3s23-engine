@@ -44,7 +44,7 @@ func (q *sendQueue) pushGrid(it sendItem) {
 	}
 	for i := range q.items {
 		if q.items[i].kind == engine.FrameGrid {
-			
+
 			if it.gen >= q.items[i].gen {
 				q.items[i] = it
 			}

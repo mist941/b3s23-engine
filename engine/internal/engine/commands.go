@@ -7,7 +7,7 @@ import (
 
 var (
 	ErrRunning = errors.New("engine: operation not allowed while running")
-	ErrClosed = errors.New("engine: simulation is shutting down")
+	ErrClosed  = errors.New("engine: simulation is shutting down")
 )
 
 type cmdKind int
