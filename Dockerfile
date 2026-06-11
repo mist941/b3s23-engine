@@ -9,8 +9,8 @@ ARG TARGETOS TARGETARCH
 ARG VERSION=dev
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" \
-    -o /out/engined ./cmd/engined
-RUN mkdir -p /out/data
+    -o /out/engined ./cmd/engined \
+    && mkdir -p /out/data
 
 FROM --platform=$BUILDPLATFORM node:24-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf AS node-builder
 WORKDIR /app
@@ -19,7 +19,7 @@ RUN npm ci
 COPY ui/ ./
 RUN npm run build
 
-FROM gcr.io/distroless/static-debian12
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:d093aa3e30dbadd3efe1310db061a14da60299baff8450a17fe0ccc514a16639
 LABEL org.opencontainers.image.source="https://github.com/mist941/b3s23-engine" \
       org.opencontainers.image.description="Conway's Game of Life (B3/S23) engine: Go simulation core, SQLite persistence, REST + WebSocket API, WebGL2 UI" \
       org.opencontainers.image.licenses="MIT"

@@ -9,6 +9,9 @@ updates:
     directory: /ui
     schedule:
       interval: weekly
+    groups:
+      ui:
+        patterns: ["*"]
 
   - package-ecosystem: github-actions
     directory: /
