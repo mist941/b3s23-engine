@@ -23,14 +23,14 @@ clear message if it is unavailable.
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev
 ```
 
 The dev server proxies `/api` (REST + WebSocket) to the engine. Start the engine
 first:
 
 ```bash
-go -C ../engine run ./cmd/engined      # http://localhost:8050
+go -C ../engine run ./cmd/engined
 ```
 
 Override the engine target for the dev proxy with `ENGINE_TARGET`, or point the
