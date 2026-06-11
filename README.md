@@ -25,8 +25,6 @@ docker compose up -d          # pulls the published image
 docker compose up -d --build  # or build it from source
 ```
 
-Test Docker Hub Deploy
-
 ## License
 
 [MIT](https://github.com/mist941/b3s23-engine/blob/main/LICENSE)
