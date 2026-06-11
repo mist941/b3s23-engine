@@ -17,7 +17,6 @@ export function Controls({ status, onError, busy, setBusy }: Props) {
   const [tickHz, setTickHz] = useState(5);
   const [width, setWidth] = useState(1024);
   const [height, setHeight] = useState(1024);
-  const [streamN, setStreamN] = useState(1);
   const seeded = useRef(false);
 
   useEffect(() => {
@@ -27,7 +26,6 @@ export function Controls({ status, onError, busy, setBusy }: Props) {
       setTickHz(status.tickHz);
       setWidth(status.width);
       setHeight(status.height);
-      setStreamN(status.streamEveryN);
     }
   }, [status]);
 
@@ -79,9 +77,6 @@ export function Controls({ status, onError, busy, setBusy }: Props) {
           <button onClick={() => run(() => api.reset())} disabled={busy}>
             ↺ Reset
           </button>
-          <button onClick={() => run(api.snapshot)} disabled={busy}>
-            💾 Snapshot
-          </button>
         </div>
       </section>
 
@@ -126,26 +121,6 @@ export function Controls({ status, onError, busy, setBusy }: Props) {
             />
             <button
               onClick={() => run(() => api.setTickRate(tickHz))}
-              disabled={busy}
-            >
-              Apply
-            </button>
-          </div>
-        </label>
-        <label className="field">
-          <span>Stream every N generations</span>
-          <div className="row">
-            <input
-              type="number"
-              min={1}
-              step={1}
-              value={streamN}
-              onChange={(e) =>
-                setStreamN(Math.max(1, Math.round(Number(e.target.value))))
-              }
-            />
-            <button
-              onClick={() => run(() => api.setStreamRate(streamN))}
               disabled={busy}
             >
               Apply

@@ -33,7 +33,6 @@ export function StatusBar({ status, connected, fps, live }: Props) {
       <Stat label="epoch" value={status ? String(status.epoch) : "—"} />
       <Stat label="size" value={status ? `${status.width}×${status.height}` : "—"} />
       <Stat label="tick" value={status ? `${status.tickHz} Hz` : "—"} />
-      <Stat label="stream" value={status ? `1/${status.streamEveryN}` : "—"} />
       <Stat label="started" value={status ? fmtTime(status.startTime) : "—"} />
       <Stat label="render" value={`${fps.toFixed(0)} fps`} />
     </div>

@@ -52,7 +52,4 @@ export const api = {
     req<Status>("PUT", "/config/size", { width, height }),
   setTickRate: (tickHz: number) =>
     req<Status>("PUT", "/config/tickrate", { tickHz }),
-  setStreamRate: (streamEveryN: number) =>
-    req<Status>("PUT", "/config/streamrate", { streamEveryN }),
-  snapshot: () => req<{ snapshotGeneration?: number }>("POST", "/snapshot"),
 };
