@@ -4,6 +4,8 @@ updates:
     directory: /engine
     schedule:
       interval: weekly
+    commit-message:
+      prefix: "fix(deps)"
 
   - package-ecosystem: npm
     directory: /ui
@@ -12,13 +14,19 @@ updates:
     groups:
       ui:
         patterns: ["*"]
+    commit-message:
+      prefix: "fix(deps)"
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
