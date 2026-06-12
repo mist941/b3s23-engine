@@ -200,6 +200,53 @@ func TestResetBumpsEpochOverHTTP(t *testing.T) {
 	}
 }
 
+func TestSetCellsEndpoint(t *testing.T) {
+	srv, sim := newServer(t)
+
+	// Valid batch applies and returns status.
+	resp := do(t, srv, http.MethodPost, "/api/v1/cells",
+		httpapi.SetCellsRequest{Cells: [][3]int{{5, 5, 1}, {6, 5, 1}, {7, 5, 0}}})
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("set cells status = %d, want 200", resp.StatusCode)
+	}
+	decodeStatus(t, resp)
+	v := sim.CurrentView()
+	if !v.Grid.Get(5, 5) || !v.Grid.Get(6, 5) || v.Grid.Get(7, 5) {
+		t.Fatal("cells were not applied as requested")
+	}
+
+	// Out-of-bounds coordinate -> 400.
+	resp = do(t, srv, http.MethodPost, "/api/v1/cells",
+		httpapi.SetCellsRequest{Cells: [][3]int{{64, 0, 1}}})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("out-of-bounds status = %d, want 400", resp.StatusCode)
+	}
+
+	// Invalid alive flag -> 400.
+	resp = do(t, srv, http.MethodPost, "/api/v1/cells",
+		httpapi.SetCellsRequest{Cells: [][3]int{{1, 1, 2}}})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("bad alive flag status = %d, want 400", resp.StatusCode)
+	}
+
+	// Empty batch -> 400.
+	resp = do(t, srv, http.MethodPost, "/api/v1/cells", httpapi.SetCellsRequest{})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("empty batch status = %d, want 400", resp.StatusCode)
+	}
+
+	// Oversized batch -> 400.
+	big := make([][3]int, engine.MaxCellBatch+1)
+	resp = do(t, srv, http.MethodPost, "/api/v1/cells", httpapi.SetCellsRequest{Cells: big})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("oversized batch status = %d, want 400", resp.StatusCode)
+	}
+}
+
 func TestHealthz(t *testing.T) {
 	srv, _ := newServer(t)
 	resp := do(t, srv, http.MethodGet, "/api/v1/healthz", nil)

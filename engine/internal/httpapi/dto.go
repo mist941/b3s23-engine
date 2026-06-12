@@ -97,6 +97,10 @@ type StreamRateRequest struct {
 	StreamEveryN int `json:"streamEveryN"`
 }
 
+type SetCellsRequest struct {
+	Cells [][3]int `json:"cells"` // [x, y, alive] triplets, alive is 0 or 1
+}
+
 type ErrorResponse struct {
 	Error string `json:"error"`
 }

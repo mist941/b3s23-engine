@@ -159,6 +159,30 @@ func (a *API) handleStreamRate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, statusFromView(a.sim.CurrentView()))
 }
 
+func (a *API) handleSetCells(w http.ResponseWriter, r *http.Request) {
+	var req SetCellsRequest
+	if !decodeRequired(w, r, &req) {
+		return
+	}
+	if len(req.Cells) == 0 {
+		writeError(w, http.StatusBadRequest, "cells must not be empty")
+		return
+	}
+	cells := make([]engine.Cell, len(req.Cells))
+	for i, t := range req.Cells {
+		if t[2] != 0 && t[2] != 1 {
+			writeError(w, http.StatusBadRequest, "alive flag must be 0 or 1")
+			return
+		}
+		cells[i] = engine.Cell{X: t[0], Y: t[1], Alive: t[2] == 1}
+	}
+	if err := a.sim.SetCells(r.Context(), cells); err != nil {
+		writeCommandError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, statusFromView(a.sim.CurrentView()))
+}
+
 func (a *API) handleHealth(w http.ResponseWriter, r *http.Request) {
 	err := a.sim.Healthy(r.Context())
 	v := a.sim.CurrentView()

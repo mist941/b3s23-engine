@@ -26,6 +26,7 @@ func NewRouter(sim *engine.Simulation, wsHandler http.Handler, cfg config.Config
 	mux.HandleFunc("PUT /api/v1/config/size", api.handleSize)
 	mux.HandleFunc("PUT /api/v1/config/tickrate", api.handleTickRate)
 	mux.HandleFunc("PUT /api/v1/config/streamrate", api.handleStreamRate)
+	mux.HandleFunc("POST /api/v1/cells", api.handleSetCells)
 	mux.HandleFunc("POST /api/v1/snapshot", api.handleSnapshot)
 	mux.HandleFunc("GET /api/v1/healthz", api.handleHealth)
 	mux.Handle("GET /api/v1/ws", wsHandler)
