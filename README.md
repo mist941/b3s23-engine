@@ -25,6 +25,23 @@ docker compose up -d          # pulls the published image
 docker compose up -d --build  # or build it from source
 ```
 
+## Releases
+
+Versioning is automated with
+[release-please](https://github.com/googleapis/release-please).
+
+- PR titles (used as squash-commit messages) must follow
+  [Conventional Commits](https://www.conventionalcommits.org/):
+  `fix: ...` → patch, `feat: ...` → minor, `feat!: ...` or a
+  `BREAKING CHANGE:` footer → major. `chore:`, `docs:`, `ci:`, `refactor:`,
+  and `test:` do not trigger a release.
+- release-please keeps a release PR open that accumulates changes since the
+  last tag; merging it creates the `vX.Y.Z` tag, publishes the GitHub Release
+  with notes, and updates `CHANGELOG.md`.
+- The new tag dispatches the docker workflow, which publishes
+  `mist941/b3s23-engine:X.Y.Z` / `:X.Y` / `:latest` with the version compiled
+  into the binary (`docker run --rm mist941/b3s23-engine:X.Y.Z -version`).
+
 ## License
 
 [MIT](https://github.com/mist941/b3s23-engine/blob/main/LICENSE)
