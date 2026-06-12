@@ -17,6 +17,7 @@ type Controller interface {
 	Step(context.Context) error
 	SetTickRate(context.Context, float64) error
 	SetStreamEveryN(context.Context, int) error
+	SetCells(context.Context, []engine.Cell) error
 }
 
 type Options struct {
@@ -103,6 +104,9 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.logger.Debug("ws accept failed", "err", err)
 		return
 	}
+	// The default 32 KiB read limit is too small for a max-size setCells
+	// batch (~60 KiB of JSON) and would kill the connection mid-stroke.
+	conn.SetReadLimit(256 << 10)
 
 	c := &client{conn: conn, hub: h, q: newSendQueue(h.opts.SendQueueSize), logger: h.logger}
 	if !h.register(c) {

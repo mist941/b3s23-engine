@@ -21,6 +21,7 @@ import (
 type fakeController struct {
 	mu    sync.Mutex
 	plays int
+	cells []engine.Cell
 }
 
 func (f *fakeController) Play(context.Context) error {
@@ -34,10 +35,23 @@ func (f *fakeController) Step(context.Context) error                 { return ni
 func (f *fakeController) SetTickRate(context.Context, float64) error { return nil }
 func (f *fakeController) SetStreamEveryN(context.Context, int) error { return nil }
 
+func (f *fakeController) SetCells(_ context.Context, cells []engine.Cell) error {
+	f.mu.Lock()
+	f.cells = append(f.cells, cells...)
+	f.mu.Unlock()
+	return nil
+}
+
 func (f *fakeController) playCount() int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.plays
+}
+
+func (f *fakeController) cellsSeen() []engine.Cell {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]engine.Cell(nil), f.cells...)
 }
 
 func mustJSON(t *testing.T, v any) []byte {
@@ -174,6 +188,67 @@ func TestHubRoutesControlToController(t *testing.T) {
 			t.Fatal("play control was not routed to the controller")
 		}
 		time.Sleep(5 * time.Millisecond)
+	}
+}
+
+func TestHubRoutesSetCellsToController(t *testing.T) {
+	ctrl := &fakeController{}
+	_, srv := newHubServer(ctrl)
+	defer srv.Close()
+
+	conn, ctx, cancel := dial(t, srv)
+	defer cancel()
+	defer conn.Close(websocket.StatusNormalClosure, "")
+
+	msg := `{"type":"setCells","cells":[[1,2,1],[3,4,0]]}`
+	if err := conn.Write(ctx, websocket.MessageText, []byte(msg)); err != nil {
+		t.Fatal(err)
+	}
+
+	deadline := time.Now().Add(2 * time.Second)
+	for len(ctrl.cellsSeen()) < 2 {
+		if time.Now().After(deadline) {
+			t.Fatal("setCells control was not routed to the controller")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	got := ctrl.cellsSeen()
+	want := []engine.Cell{{X: 1, Y: 2, Alive: true}, {X: 3, Y: 4, Alive: false}}
+	for i, c := range want {
+		if got[i] != c {
+			t.Fatalf("cell %d = %+v, want %+v", i, got[i], c)
+		}
+	}
+}
+
+func TestHubIgnoresInvalidSetCells(t *testing.T) {
+	ctrl := &fakeController{}
+	_, srv := newHubServer(ctrl)
+	defer srv.Close()
+
+	conn, ctx, cancel := dial(t, srv)
+	defer cancel()
+	defer conn.Close(websocket.StatusNormalClosure, "")
+
+	// alive flag outside {0,1} must drop the whole message
+	bad := `{"type":"setCells","cells":[[1,2,7]]}`
+	if err := conn.Write(ctx, websocket.MessageText, []byte(bad)); err != nil {
+		t.Fatal(err)
+	}
+	// follow with a valid play to prove the connection survived
+	if err := conn.Write(ctx, websocket.MessageText, []byte(`{"type":"play"}`)); err != nil {
+		t.Fatal(err)
+	}
+
+	deadline := time.Now().Add(2 * time.Second)
+	for ctrl.playCount() == 0 {
+		if time.Now().After(deadline) {
+			t.Fatal("connection did not survive an invalid setCells")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	if n := len(ctrl.cellsSeen()); n != 0 {
+		t.Fatalf("invalid batch reached the controller: %d cells", n)
 	}
 }
 

@@ -108,9 +108,10 @@ func (c *client) readPump(ctx context.Context) {
 }
 
 type clientMsg struct {
-	Type         string  `json:"type"`
-	TickHz       float64 `json:"tickHz"`
-	StreamEveryN int     `json:"streamEveryN"`
+	Type         string   `json:"type"`
+	TickHz       float64  `json:"tickHz"`
+	StreamEveryN int      `json:"streamEveryN"`
+	Cells        [][3]int `json:"cells"` // [x, y, alive] triplets, alive is 0 or 1
 }
 
 func (c *client) handleControl(ctx context.Context, data []byte) {
@@ -137,10 +138,28 @@ func (c *client) handleControl(ctx context.Context, data []byte) {
 		if m.StreamEveryN >= 1 {
 			err = c.hub.ctrl.SetStreamEveryN(ctx, m.StreamEveryN)
 		}
+	case "setCells":
+		if cells, ok := decodeCells(m.Cells); ok {
+			err = c.hub.ctrl.SetCells(ctx, cells)
+		}
 	}
 	if err != nil {
 		c.logger.Debug("ws control failed", "type", m.Type, "err", err)
 	}
+}
+
+func decodeCells(raw [][3]int) ([]engine.Cell, bool) {
+	if len(raw) == 0 {
+		return nil, false
+	}
+	cells := make([]engine.Cell, len(raw))
+	for i, t := range raw {
+		if t[2] != 0 && t[2] != 1 {
+			return nil, false
+		}
+		cells[i] = engine.Cell{X: t[0], Y: t[1], Alive: t[2] == 1}
+	}
+	return cells, true
 }
 
 func (c *client) cleanup() {
