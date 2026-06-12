@@ -9,6 +9,7 @@ import {
 
 import { createRenderer, type Camera, type RgbColors } from "./webgl";
 import type { GridFrame } from "../grid/decode";
+import type { CellWrite } from "../ws/useEngineSocket";
 
 export interface GridColors {
   alive: string;
@@ -21,9 +22,13 @@ export interface GridHandle {
   pushFrame: (frame: GridFrame) => void;
 }
 
+export type Tool = "pan" | "draw";
+
 interface Props {
   colors: GridColors;
   gridLines?: boolean;
+  tool?: Tool;
+  onPaintCells?: (cells: CellWrite[]) => void;
   onFps?: (fps: number) => void;
   ref?: Ref<GridHandle>;
 }
@@ -46,7 +51,14 @@ function toRgbColors(c: GridColors): RgbColors {
   };
 }
 
-function GridCanvasImpl({ colors, gridLines = true, onFps, ref }: Props) {
+function GridCanvasImpl({
+  colors,
+  gridLines = true,
+  tool = "pan",
+  onPaintCells,
+  onFps,
+  ref,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameRef = useRef<GridFrame | null>(null);
   const uploadPendingRef = useRef(false);
@@ -55,6 +67,10 @@ function GridCanvasImpl({ colors, gridLines = true, onFps, ref }: Props) {
   const fittedDimsRef = useRef<{ w: number; h: number } | null>(null);
   const gridLinesRef = useRef(gridLines);
   gridLinesRef.current = gridLines;
+  const toolRef = useRef<Tool>(tool);
+  toolRef.current = tool;
+  const onPaintCellsRef = useRef(onPaintCells);
+  onPaintCellsRef.current = onPaintCells;
 
   const [error, setError] = useState<string | null>(null);
 
@@ -159,13 +175,112 @@ function GridCanvasImpl({ colors, gridLines = true, onFps, ref }: Props) {
     let lastX = 0;
     let lastY = 0;
 
+    let painting = false;
+    let erase = false;
+    let moved = false;
+    let downCell: { x: number; y: number } | null = null;
+    let lastCell: { x: number; y: number } | null = null;
+    const stroke = new Map<string, 0 | 1>();
+    let flushTimer = 0;
+
+    const screenToCell = (e: PointerEvent) => {
+      const f = frameRef.current;
+      if (!f) return null;
+      const rect = canvas.getBoundingClientRect();
+      const cam = cameraRef.current;
+      const x = Math.floor(
+        ((e.clientX - rect.left) * dpr() - cam.originX) / cam.cellSize,
+      );
+      const y = Math.floor(
+        ((e.clientY - rect.top) * dpr() - cam.originY) / cam.cellSize,
+      );
+      if (x < 0 || x >= f.width || y < 0 || y >= f.height) return null;
+      return { x, y };
+    };
+
+    const cellAlive = (x: number, y: number): boolean => {
+      const f = frameRef.current;
+      if (!f) return false;
+      return ((f.payload[y * f.rowBytes + (x >> 3)] >> (x & 7)) & 1) === 1;
+    };
+
+    const flushStroke = () => {
+      if (flushTimer) {
+        window.clearTimeout(flushTimer);
+        flushTimer = 0;
+      }
+      if (stroke.size === 0) return;
+      const cells: CellWrite[] = [];
+      stroke.forEach((alive, key) => {
+        const i = key.indexOf(",");
+        cells.push([Number(key.slice(0, i)), Number(key.slice(i + 1)), alive]);
+      });
+      stroke.clear();
+      onPaintCellsRef.current?.(cells);
+    };
+
+    const addCell = (x: number, y: number, alive: 0 | 1) => {
+      stroke.set(`${x},${y}`, alive);
+      if (!flushTimer) flushTimer = window.setTimeout(flushStroke, 40);
+    };
+
+    // Bresenham between consecutive pointer cells so fast drags leave no gaps.
+    const paintLine = (
+      from: { x: number; y: number },
+      to: { x: number; y: number },
+      alive: 0 | 1,
+    ) => {
+      let x = from.x;
+      let y = from.y;
+      const dx = Math.abs(to.x - x);
+      const dy = -Math.abs(to.y - y);
+      const sx = x < to.x ? 1 : -1;
+      const sy = y < to.y ? 1 : -1;
+      let err = dx + dy;
+      for (;;) {
+        addCell(x, y, alive);
+        if (x === to.x && y === to.y) break;
+        const e2 = 2 * err;
+        if (e2 >= dy) {
+          err += dy;
+          x += sx;
+        }
+        if (e2 <= dx) {
+          err += dx;
+          y += sy;
+        }
+      }
+    };
+
     const onDown = (e: PointerEvent) => {
+      if (toolRef.current === "draw" && e.button === 0) {
+        painting = true;
+        erase = e.shiftKey;
+        moved = false;
+        downCell = screenToCell(e);
+        lastCell = downCell;
+        canvas.setPointerCapture(e.pointerId);
+        return;
+      }
       dragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
       canvas.setPointerCapture(e.pointerId);
     };
     const onMove = (e: PointerEvent) => {
+      if (painting) {
+        const cell = screenToCell(e);
+        if (!cell) {
+          lastCell = null;
+          return;
+        }
+        if (!moved && lastCell && cell.x === lastCell.x && cell.y === lastCell.y)
+          return;
+        moved = true;
+        paintLine(lastCell ?? cell, cell, erase ? 0 : 1);
+        lastCell = cell;
+        return;
+      }
       if (!dragging) return;
       const dx = (e.clientX - lastX) * dpr();
       const dy = (e.clientY - lastY) * dpr();
@@ -180,10 +295,21 @@ function GridCanvasImpl({ colors, gridLines = true, onFps, ref }: Props) {
       dirtyRef.current = true;
     };
     const onUp = (e: PointerEvent) => {
+      if (painting) {
+        painting = false;
+        if (!moved && downCell) {
+          addCell(downCell.x, downCell.y, cellAlive(downCell.x, downCell.y) ? 0 : 1);
+        }
+        flushStroke();
+        downCell = lastCell = null;
+      }
       dragging = false;
       try {
         canvas.releasePointerCapture(e.pointerId);
       } catch {}
+    };
+    const onContextMenu = (e: MouseEvent) => {
+      if (toolRef.current === "draw") e.preventDefault();
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -210,17 +336,23 @@ function GridCanvasImpl({ colors, gridLines = true, onFps, ref }: Props) {
     canvas.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     canvas.addEventListener("wheel", onWheel, { passive: false });
+    canvas.addEventListener("contextmenu", onContextMenu);
     return () => {
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       canvas.removeEventListener("wheel", onWheel);
+      canvas.removeEventListener("contextmenu", onContextMenu);
+      if (flushTimer) window.clearTimeout(flushTimer);
     };
   }, []);
 
   return (
     <div className="stage">
-      <canvas ref={canvasRef} className="grid-canvas" />
+      <canvas
+        ref={canvasRef}
+        className={"grid-canvas" + (tool === "draw" ? " draw" : "")}
+      />
       {error && <div className="canvas-error">{error}</div>}
     </div>
   );

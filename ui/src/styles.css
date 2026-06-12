@@ -149,6 +149,18 @@ body {
   cursor: grabbing;
 }
 
+.grid-canvas.draw,
+.grid-canvas.draw:active {
+  cursor: crosshair;
+}
+
+.row.seg button.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: #04140a;
+  font-weight: 600;
+}
+
 .overlay-hint {
   position: absolute;
   left: 12px;

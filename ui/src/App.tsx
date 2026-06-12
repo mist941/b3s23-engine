@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "./api/client";
 import type { Status } from "./api/types";
 import { useEngineSocket } from "./ws/useEngineSocket";
-import { GridCanvas, type GridHandle } from "./render/GridCanvas";
+import { GridCanvas, type GridHandle, type Tool } from "./render/GridCanvas";
 import { StatusBar } from "./components/StatusBar";
 import { Controls } from "./components/Controls";
 
@@ -23,9 +23,10 @@ export default function App() {
     generation: number;
     population: number;
   } | null>(null);
+  const [tool, setTool] = useState<Tool>("pan");
   const canvasRef = useRef<GridHandle>(null);
 
-  const { connected } = useEngineSocket({
+  const { connected, sendCells } = useEngineSocket({
     onStatus: (s) => {
       setStatus(s);
       setLive({ generation: s.generation, population: s.population });
@@ -59,8 +60,18 @@ export default function App() {
       </header>
 
       <main className="stage-wrap">
-        <GridCanvas ref={canvasRef} colors={COLORS} onFps={setFps} />
-        <div className="overlay-hint">drag to pan · scroll to zoom</div>
+        <GridCanvas
+          ref={canvasRef}
+          colors={COLORS}
+          onFps={setFps}
+          tool={tool}
+          onPaintCells={sendCells}
+        />
+        <div className="overlay-hint">
+          {tool === "draw"
+            ? "click to toggle · drag to paint · shift-drag to erase · right-drag to pan"
+            : "drag to pan · scroll to zoom"}
+        </div>
       </main>
 
       <aside className="panel">
@@ -69,6 +80,8 @@ export default function App() {
           onError={setError}
           busy={busy}
           setBusy={setBusy}
+          tool={tool}
+          setTool={setTool}
         />
         {error && <div className="error-banner">⚠ {error}</div>}
       </aside>

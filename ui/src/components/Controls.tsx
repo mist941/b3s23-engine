@@ -2,15 +2,18 @@ import { useEffect, useRef, useState } from "react";
 
 import { api } from "../api/client";
 import type { Status } from "../api/types";
+import type { Tool } from "../render/GridCanvas";
 
 interface Props {
   status: Status | null;
   onError: (msg: string | null) => void;
   busy: boolean;
   setBusy: (b: boolean) => void;
+  tool: Tool;
+  setTool: (t: Tool) => void;
 }
 
-export function Controls({ status, onError, busy, setBusy }: Props) {
+export function Controls({ status, onError, busy, setBusy, tool, setTool }: Props) {
   const running = status?.state === "running";
 
   const [prob, setProb] = useState(0.1);
@@ -49,6 +52,24 @@ export function Controls({ status, onError, busy, setBusy }: Props) {
 
   return (
     <div className="controls">
+      <section>
+        <h3>Tool</h3>
+        <div className="row seg">
+          <button
+            className={tool === "pan" ? "active" : ""}
+            onClick={() => setTool("pan")}
+          >
+            ✋ Pan
+          </button>
+          <button
+            className={tool === "draw" ? "active" : ""}
+            onClick={() => setTool("draw")}
+          >
+            ✏️ Draw
+          </button>
+        </div>
+      </section>
+
       <section>
         <h3>Loop</h3>
         <div className="row">
