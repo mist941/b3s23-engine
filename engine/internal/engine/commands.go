@@ -6,9 +6,13 @@ import (
 )
 
 var (
-	ErrRunning = errors.New("engine: operation not allowed while running")
-	ErrClosed  = errors.New("engine: simulation is shutting down")
+	ErrRunning         = errors.New("engine: operation not allowed while running")
+	ErrClosed          = errors.New("engine: simulation is shutting down")
+	ErrCellOutOfBounds = errors.New("engine: cell coordinates out of bounds")
+	ErrBatchTooLarge   = errors.New("engine: too many cells in one batch")
 )
+
+const MaxCellBatch = 4096
 
 type cmdKind int
 
@@ -22,6 +26,7 @@ const (
 	cmdSetSize
 	cmdSetTickRate
 	cmdSetStreamRate
+	cmdSetCells
 	cmdSnapshot
 	cmdShutdown
 )
@@ -37,6 +42,7 @@ type command struct {
 	tickHz       float64
 	streamEveryN int
 	reseed       bool
+	cells        []Cell
 	reply        chan error
 }
 
@@ -104,6 +110,16 @@ func (s *Simulation) SetTickRate(ctx context.Context, hz float64) error {
 
 func (s *Simulation) SetStreamEveryN(ctx context.Context, n int) error {
 	return s.send(ctx, command{kind: cmdSetStreamRate, streamEveryN: n})
+}
+
+func (s *Simulation) SetCells(ctx context.Context, cells []Cell) error {
+	if len(cells) == 0 {
+		return nil
+	}
+	if len(cells) > MaxCellBatch {
+		return ErrBatchTooLarge
+	}
+	return s.send(ctx, command{kind: cmdSetCells, cells: cells})
 }
 
 func (s *Simulation) ForceSnapshot(ctx context.Context) error {

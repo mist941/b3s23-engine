@@ -69,6 +69,11 @@ type Store interface {
 	Close() error
 }
 
+type Cell struct {
+	X, Y  int
+	Alive bool
+}
+
 type FrameKind int
 
 const (

@@ -313,6 +313,9 @@ func (s *Simulation) apply(c command) (exit bool) {
 		}
 		c.reply <- nil
 
+	case cmdSetCells:
+		c.reply <- s.setCells(c.cells)
+
 	case cmdSnapshot:
 		s.requestSnapshot(ReasonManual)
 		c.reply <- nil
@@ -339,6 +342,22 @@ func (s *Simulation) reseedNewEpoch(prob float64, seed uint64, reason string) {
 	s.broadcastStatus()
 	s.broadcastGrid(pop)
 	s.requestSnapshot(reason)
+}
+
+func (s *Simulation) setCells(cells []Cell) error {
+	for _, c := range cells {
+		if c.X < 0 || c.X >= s.cur.W || c.Y < 0 || c.Y >= s.cur.H {
+			return ErrCellOutOfBounds
+		}
+	}
+	for _, c := range cells {
+		s.cur.Set(c.X, c.Y, c.Alive)
+	}
+	pop := s.cur.Population()
+	s.publish(pop)
+	s.broadcastStatus()
+	s.broadcastGrid(pop)
+	return nil
 }
 
 func (s *Simulation) resizeNewEpoch(w, h int) {

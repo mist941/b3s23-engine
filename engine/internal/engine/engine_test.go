@@ -220,6 +220,80 @@ func TestSetSizeRejectedWhileRunning(t *testing.T) {
 	}
 }
 
+func TestSetCellsAppliesWhilePaused(t *testing.T) {
+	sim, _, fb := newSim(t)
+	ctx := context.Background()
+	gridsBefore := fb.count(engine.FrameGrid)
+
+	cells := []engine.Cell{
+		{X: 1, Y: 1, Alive: true},
+		{X: 2, Y: 1, Alive: true},
+		{X: 3, Y: 1, Alive: false},
+	}
+	if err := sim.SetCells(ctx, cells); err != nil {
+		t.Fatalf("SetCells: %v", err)
+	}
+
+	v := sim.CurrentView()
+	if !v.Grid.Get(1, 1) || !v.Grid.Get(2, 1) {
+		t.Fatal("cells were not set alive")
+	}
+	if v.Grid.Get(3, 1) {
+		t.Fatal("cell was not cleared")
+	}
+	if fb.count(engine.FrameGrid) <= gridsBefore {
+		t.Fatal("expected a grid broadcast after SetCells while paused")
+	}
+}
+
+func TestSetCellsOutOfBoundsRejectedAtomically(t *testing.T) {
+	sim, _, _ := newSim(t)
+	ctx := context.Background()
+
+	before := sim.CurrentView().Grid.Get(5, 5)
+	cells := []engine.Cell{
+		{X: 5, Y: 5, Alive: !before}, // valid: would flip the cell if applied
+		{X: 64, Y: 0, Alive: true},   // out of bounds on a 64x64 grid
+	}
+	if err := sim.SetCells(ctx, cells); !errors.Is(err, engine.ErrCellOutOfBounds) {
+		t.Fatalf("got %v, want ErrCellOutOfBounds", err)
+	}
+
+	// Force a republish of the live grid to observe any partial mutation.
+	if err := sim.SetTickRate(ctx, 123); err != nil {
+		t.Fatal(err)
+	}
+	if sim.CurrentView().Grid.Get(5, 5) != before {
+		t.Fatal("rejected batch must not be applied partially")
+	}
+}
+
+func TestSetCellsWhileRunning(t *testing.T) {
+	sim, _, _ := newSim(t)
+	ctx := context.Background()
+	if err := sim.Play(ctx); err != nil {
+		t.Fatal(err)
+	}
+	defer sim.Pause(ctx)
+	if err := sim.SetCells(ctx, []engine.Cell{{X: 0, Y: 0, Alive: true}}); err != nil {
+		t.Fatalf("SetCells while running: %v", err)
+	}
+}
+
+func TestSetCellsBatchLimits(t *testing.T) {
+	sim, _, _ := newSim(t)
+	ctx := context.Background()
+
+	if err := sim.SetCells(ctx, nil); err != nil {
+		t.Fatalf("empty batch should be a no-op, got %v", err)
+	}
+
+	big := make([]engine.Cell, engine.MaxCellBatch+1)
+	if err := sim.SetCells(ctx, big); !errors.Is(err, engine.ErrBatchTooLarge) {
+		t.Fatalf("got %v, want ErrBatchTooLarge", err)
+	}
+}
+
 func TestStopWritesFinalSnapshot(t *testing.T) {
 	cfg := config.Default()
 	cfg.Width, cfg.Height = 64, 64
