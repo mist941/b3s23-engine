@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>B3S23 Engine — Conway's Game of Life as a service</title>
+  <meta name="description" content="Conway's Game of Life (B3/S23) as a self-contained service: Go simulation core, REST + WebSocket streaming API, React/WebGL2 UI, one small distroless container." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 3'%3E%3Crect x='1' y='0' width='1' height='1' fill='%2339ff14'/%3E%3Crect x='2' y='1' width='1' height='1' fill='%2339ff14'/%3E%3Crect x='0' y='2' width='3' height='1' fill='%2339ff14'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a class="logo" href="#"><span class="dot"></span>B3S23 <span class="muted">Engine</span></a>
+    <nav class="nav">
+      <a href="#features">Features</a>
+      <a href="#quick-start">Quick start</a>
+      <a href="#examples">Examples</a>
+      <a href="https://github.com/mist941/b3s23-engine">GitHub</a>
+      <a href="https://hub.docker.com/r/mist941/b3s23-engine">Docker Hub</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>Conway's Game of Life,<br /><span class="accent">running as a service</span></h1>
+    <p class="tagline">
+      A Go simulation core with a REST + WebSocket streaming API and a
+      React/WebGL2 UI — all shipped in one small distroless container.
+      State lives in SQLite, so the world survives restarts.
+    </p>
+    <div class="cta-row">
+      <a class="btn primary" href="#quick-start">Quick start</a>
+      <a class="btn ghost" href="https://github.com/mist941/b3s23-engine">View on GitHub</a>
+    </div>
+    <code class="one-liner"><span class="accent">$</span> docker run -d -p 8050:8050 mist941/b3s23-engine</code>
+  </div>
+</section>
+
+<section id="features">
+  <div class="container">
+    <p class="section-label">// features</p>
+    <h2>What's inside</h2>
+    <p class="section-intro">
+      A complete, production-shaped Game of Life: simulation engine, streaming
+      API, interactive UI and persistence — with zero configuration.
+    </p>
+    <div class="features-grid">
+      <div class="card">
+        <h3><span class="icon">✏</span>Interactive editing</h3>
+        <p>Draw cells with the mouse — paint, erase, toggle — or stamp classic
+          patterns with a live ghost preview.</p>
+      </div>
+      <div class="card">
+        <h3><span class="icon">▦</span>WebGL2 renderer</h3>
+        <p>Bit-packed frames are unpacked on the GPU. Smooth pan and zoom even
+          on large grids.</p>
+      </div>
+      <div class="card">
+        <h3><span class="icon">⇄</span>REST + WebSocket API</h3>
+        <p>Full control surface — play, pause, step, reseed, resize, tick rate,
+          cell editing — plus binary frame streaming with per-client backpressure.</p>
+      </div>
+      <div class="card">
+        <h3><span class="icon">⛁</span>Persistent</h3>
+        <p>The grid is snapshotted to SQLite and restored on restart. Pause,
+          redeploy, continue.</p>
+      </div>
+      <div class="card">
+        <h3><span class="icon">⚙</span>Compact engine</h3>
+        <p>Bit-packed toroidal grid — one bit per cell, up to 16384×16384 —
+          stepped in parallel across CPU cores.</p>
+      </div>
+      <div class="card">
+        <h3><span class="icon">▶</span>Easy to run</h3>
+        <p>One small distroless Docker image (amd64 + arm64), health check
+          included, no configuration required.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="quick-start">
+  <div class="container">
+    <p class="section-label">// quick start</p>
+    <h2>Run it</h2>
+
+    <div class="run-step">
+      <h3>Docker</h3>
+      <p>One command. The UI and the API are served from the same port —
+        open <a href="http://localhost:8050">localhost:8050</a> when it's up.</p>
+      <div class="code-block"><code><span class="cmt"># the /data volume keeps the SQLite database, so the world survives restarts</span>
+docker run -d --name b3s23 -p 8050:8050 -v b3s23_data:/data mist941/b3s23-engine:latest</code></div>
+    </div>
+
+    <div class="run-step">
+      <h3>Docker Compose</h3>
+      <p>Clone the <a href="https://github.com/mist941/b3s23-engine">repository</a>, then:</p>
+      <div class="code-block"><code>docker compose up -d          <span class="cmt"># pulls the published image</span>
+docker compose up -d --build  <span class="cmt"># or build it from source</span></code></div>
+    </div>
+
+    <div class="run-step">
+      <h3>From source</h3>
+      <p>Engine (Go ≥ 1.26, no CGO) and the UI dev server (Node ≥ 24) with hot
+        reload:</p>
+      <div class="code-block"><code><span class="cmt"># engine — API on :8050</span>
+cd engine
+go run ./cmd/engined
+
+<span class="cmt"># UI dev server, proxies /api to the engine</span>
+cd ui
+npm install
+npm run dev</code></div>
+      <p>Or build the UI once and serve it straight from the engine binary:</p>
+      <div class="code-block"><code>cd ui &amp;&amp; npm install &amp;&amp; npm run build
+cd ../engine &amp;&amp; go run ./cmd/engined -static ../ui/dist</code></div>
+    </div>
+  </div>
+</section>
+
+<section id="examples">
+  <div class="container">
+    <p class="section-label">// examples</p>
+    <h2>See it in action</h2>
+
+    <!-- Replace the slot below with the demo GIF:
+    <img class="demo-img" src="demo.gif" alt="B3S23 Engine demo: drawing cells and stamping a Gosper glider gun" />
+    -->
+    <div class="demo-slot">demo recording coming soon — meanwhile, run
+      <code>docker run -d -p 8050:8050 mist941/b3s23-engine</code> and see for yourself</div>
+
+    <div class="run-step">
+      <h3>Built-in pattern library</h3>
+      <p>Eight classics ship with the UI — pick one, hover for a ghost preview,
+        click to stamp it onto the grid.</p>
+    </div>
+
+    <div class="patterns-grid">
+      <div class="pattern-card">
+        <div class="pattern-figure"><svg class="pattern-svg" viewBox="-0.5 -0.5 4 4" aria-hidden="true"><rect x="1.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="2.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="1.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="2.06" y="2.06" width="0.88" height="0.88" rx="0.12"/></svg></div>
+        <h3>Glider</h3>
+        <p>The smallest spaceship — glides diagonally forever.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-figure"><svg class="pattern-svg" viewBox="-0.5 -0.5 6 5" aria-hidden="true"><rect x="1.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="4.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="4.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="1.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="2.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="3.06" y="3.06" width="0.88" height="0.88" rx="0.12"/></svg></div>
+        <h3>Lightweight spaceship</h3>
+        <p>Cruises across the grid at half the speed of light.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-figure"><svg class="pattern-svg" viewBox="-0.5 -0.5 4 4" aria-hidden="true"><rect x="1.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="2.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="1.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="1.06" y="2.06" width="0.88" height="0.88" rx="0.12"/></svg></div>
+        <h3>R-pentomino</h3>
+        <p>Five cells that erupt into a thousand generations of chaos.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-figure"><svg class="pattern-svg" viewBox="-0.5 -0.5 8 4" aria-hidden="true"><rect x="1.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="3.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="1.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="4.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="5.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="6.06" y="2.06" width="0.88" height="0.88" rx="0.12"/></svg></div>
+        <h3>Acorn</h3>
+        <p>Seven cells that take 5,206 generations to settle down.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-figure"><svg class="pattern-svg" viewBox="-0.5 -0.5 9 4" aria-hidden="true"><rect x="6.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="1.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="1.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="5.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="6.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="7.06" y="2.06" width="0.88" height="0.88" rx="0.12"/></svg></div>
+        <h3>Diehard</h3>
+        <p>Vanishes without a trace after exactly 130 generations.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-figure"><svg class="pattern-svg" viewBox="-0.5 -0.5 14 14" aria-hidden="true"><rect x="2.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="3.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="4.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="8.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="9.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="10.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="5.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="7.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="12.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="5.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="7.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="12.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="4.06" width="0.88" height="0.88" rx="0.12"/><rect x="5.06" y="4.06" width="0.88" height="0.88" rx="0.12"/><rect x="7.06" y="4.06" width="0.88" height="0.88" rx="0.12"/><rect x="12.06" y="4.06" width="0.88" height="0.88" rx="0.12"/><rect x="2.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="3.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="4.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="8.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="9.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="10.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="2.06" y="7.06" width="0.88" height="0.88" rx="0.12"/><rect x="3.06" y="7.06" width="0.88" height="0.88" rx="0.12"/><rect x="4.06" y="7.06" width="0.88" height="0.88" rx="0.12"/><rect x="8.06" y="7.06" width="0.88" height="0.88" rx="0.12"/><rect x="9.06" y="7.06" width="0.88" height="0.88" rx="0.12"/><rect x="10.06" y="7.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="8.06" width="0.88" height="0.88" rx="0.12"/><rect x="5.06" y="8.06" width="0.88" height="0.88" rx="0.12"/><rect x="7.06" y="8.06" width="0.88" height="0.88" rx="0.12"/><rect x="12.06" y="8.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="9.06" width="0.88" height="0.88" rx="0.12"/><rect x="5.06" y="9.06" width="0.88" height="0.88" rx="0.12"/><rect x="7.06" y="9.06" width="0.88" height="0.88" rx="0.12"/><rect x="12.06" y="9.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="10.06" width="0.88" height="0.88" rx="0.12"/><rect x="5.06" y="10.06" width="0.88" height="0.88" rx="0.12"/><rect x="7.06" y="10.06" width="0.88" height="0.88" rx="0.12"/><rect x="12.06" y="10.06" width="0.88" height="0.88" rx="0.12"/><rect x="2.06" y="12.06" width="0.88" height="0.88" rx="0.12"/><rect x="3.06" y="12.06" width="0.88" height="0.88" rx="0.12"/><rect x="4.06" y="12.06" width="0.88" height="0.88" rx="0.12"/><rect x="8.06" y="12.06" width="0.88" height="0.88" rx="0.12"/><rect x="9.06" y="12.06" width="0.88" height="0.88" rx="0.12"/><rect x="10.06" y="12.06" width="0.88" height="0.88" rx="0.12"/></svg></div>
+        <h3>Pulsar</h3>
+        <p>The best-known period-3 oscillator.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-figure"><svg class="pattern-svg" viewBox="-0.5 -0.5 11 4" aria-hidden="true"><rect x="2.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="7.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="1.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="3.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="4.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="5.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="6.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="8.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="9.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="2.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="7.06" y="2.06" width="0.88" height="0.88" rx="0.12"/></svg></div>
+        <h3>Pentadecathlon</h3>
+        <p>Blinks through a fifteen-generation cycle.</p>
+      </div>
+      <div class="pattern-card wide">
+        <div class="pattern-figure"><svg class="pattern-svg" viewBox="-0.5 -0.5 37 10" aria-hidden="true"><rect x="24.06" y="0.06" width="0.88" height="0.88" rx="0.12"/><rect x="22.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="24.06" y="1.06" width="0.88" height="0.88" rx="0.12"/><rect x="12.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="13.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="20.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="21.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="34.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="35.06" y="2.06" width="0.88" height="0.88" rx="0.12"/><rect x="11.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="15.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="20.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="21.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="34.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="35.06" y="3.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="4.06" width="0.88" height="0.88" rx="0.12"/><rect x="1.06" y="4.06" width="0.88" height="0.88" rx="0.12"/><rect x="10.06" y="4.06" width="0.88" height="0.88" rx="0.12"/><rect x="16.06" y="4.06" width="0.88" height="0.88" rx="0.12"/><rect x="20.06" y="4.06" width="0.88" height="0.88" rx="0.12"/><rect x="21.06" y="4.06" width="0.88" height="0.88" rx="0.12"/><rect x="0.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="1.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="10.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="14.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="16.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="17.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="22.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="24.06" y="5.06" width="0.88" height="0.88" rx="0.12"/><rect x="10.06" y="6.06" width="0.88" height="0.88" rx="0.12"/><rect x="16.06" y="6.06" width="0.88" height="0.88" rx="0.12"/><rect x="24.06" y="6.06" width="0.88" height="0.88" rx="0.12"/><rect x="11.06" y="7.06" width="0.88" height="0.88" rx="0.12"/><rect x="15.06" y="7.06" width="0.88" height="0.88" rx="0.12"/><rect x="12.06" y="8.06" width="0.88" height="0.88" rx="0.12"/><rect x="13.06" y="8.06" width="0.88" height="0.88" rx="0.12"/></svg></div>
+        <h3>Gosper glider gun</h3>
+        <p>Fires a fresh glider every 30 generations — forever.</p>
+      </div>
+    </div>
+
+    <div class="run-step">
+      <h3>Drive it over the API</h3>
+      <p>Everything the UI does goes through the public API — script it with
+        anything that speaks HTTP. Frames stream over WebSocket at
+        <code>/api/v1/ws</code>.</p>
+      <div class="code-block"><code><span class="cmt"># current state</span>
+curl localhost:8050/api/v1/status
+
+<span class="cmt"># pause the loop</span>
+curl -X POST localhost:8050/api/v1/pause
+
+<span class="cmt"># draw a glider, cell by cell</span>
+curl -X POST localhost:8050/api/v1/cells \
+  -d '{"cells":[[11,10,1],[12,11,1],[10,12,1],[11,12,1],[12,12,1]]}'
+
+<span class="cmt"># reseed the whole world at 30% density</span>
+curl -X POST localhost:8050/api/v1/reseed -d '{"probability":0.3}'</code></div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <span>MIT licensed · built with Go, React and WebGL2</span>
+    <div class="footer-links">
+      <a href="https://github.com/mist941/b3s23-engine">GitHub</a>
+      <a href="https://hub.docker.com/r/mist941/b3s23-engine">Docker Hub</a>
+      <a href="https://conwaylife.com/wiki/">LifeWiki</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
