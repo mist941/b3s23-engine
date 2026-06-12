@@ -11,6 +11,13 @@ grid on a `<canvas>` and drives the engine over its REST + WebSocket API.
   (`texelFetch` + bit-shift) — no CPU-side unpacking. A single fullscreen triangle
   is drawn; each fragment resolves its cell from camera uniforms. Pan = drag,
   zoom = scroll (about the cursor), with fit-to-view on load/resize.
+- **Drawing** (`src/render/GridCanvas.tsx`, `src/patterns.ts`): in Draw mode
+  strokes are deduped per cell, Bresenham-interpolated between pointer events,
+  and flushed as batched `setCells` WebSocket messages every 40 ms. Pattern
+  stamps wrap toroidally, matching the engine topology; the ghost preview is a
+  plain 2D overlay canvas so the WebGL pipeline stays untouched. The engine
+  echoes a grid frame after every edit (even while paused), so drawn cells come
+  back through the normal frame path — no optimistic rendering.
 - **Networking** (`src/api/`, `src/ws/`): controls call the REST API; the
   WebSocket delivers `status` updates and `gen` header + binary grid pairs. The
   engine broadcasts the result of every control action, so the UI stays in sync
@@ -52,7 +59,12 @@ http://localhost:8050 alongside the API (`engined -static /ui`).
 
 ## Controls
 
+- **Tool**: Pan or Draw. In Draw mode: click toggles a cell, drag paints,
+  Shift-drag erases, right/middle-drag pans, scroll always zooms
+- **Pattern**: Freehand or a classic pattern (glider, LWSS, R-pentomino,
+  acorn, diehard, pulsar, pentadecathlon, Gosper glider gun) — click stamps it
+  centered under the cursor, with a ghost preview
 - **Play / Pause / Step** (step is paused-only) · **Reset**
 - **Probability** slider → **Reseed** (new epoch, generation 0)
-- **Tick rate** (generations/second) and **Stream every N** (WebSocket frame rate)
+- **Tick rate** (generations/second)
 - **Size** (width × height) — pauses, starts a new epoch, reseeds
