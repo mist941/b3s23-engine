@@ -154,6 +154,14 @@ body {
   cursor: crosshair;
 }
 
+.ghost-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .row.seg button.active {
   background: var(--accent-dim);
   border-color: var(--accent);
@@ -264,7 +272,8 @@ button:disabled {
   cursor: not-allowed;
 }
 
-input[type="number"] {
+input[type="number"],
+select {
   width: 100%;
   padding: 7px 8px;
   background: var(--bg);

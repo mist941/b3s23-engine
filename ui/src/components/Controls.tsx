@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { Status } from "../api/types";
 import type { Tool } from "../render/GridCanvas";
+import { PATTERNS } from "../patterns";
 
 interface Props {
   status: Status | null;
@@ -11,9 +12,20 @@ interface Props {
   setBusy: (b: boolean) => void;
   tool: Tool;
   setTool: (t: Tool) => void;
+  patternId: string;
+  setPatternId: (id: string) => void;
 }
 
-export function Controls({ status, onError, busy, setBusy, tool, setTool }: Props) {
+export function Controls({
+  status,
+  onError,
+  busy,
+  setBusy,
+  tool,
+  setTool,
+  patternId,
+  setPatternId,
+}: Props) {
   const running = status?.state === "running";
 
   const [prob, setProb] = useState(0.1);
@@ -68,6 +80,23 @@ export function Controls({ status, onError, busy, setBusy, tool, setTool }: Prop
             ✏️ Draw
           </button>
         </div>
+        <label className="field">
+          <span>Pattern</span>
+          <select
+            value={patternId}
+            onChange={(e) => {
+              setPatternId(e.target.value);
+              if (e.target.value) setTool("draw");
+            }}
+          >
+            <option value="">Freehand</option>
+            {PATTERNS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </section>
 
       <section>

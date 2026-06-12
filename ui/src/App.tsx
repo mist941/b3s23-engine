@@ -4,6 +4,7 @@ import { api } from "./api/client";
 import type { Status } from "./api/types";
 import { useEngineSocket } from "./ws/useEngineSocket";
 import { GridCanvas, type GridHandle, type Tool } from "./render/GridCanvas";
+import { PATTERNS } from "./patterns";
 import { StatusBar } from "./components/StatusBar";
 import { Controls } from "./components/Controls";
 
@@ -24,7 +25,9 @@ export default function App() {
     population: number;
   } | null>(null);
   const [tool, setTool] = useState<Tool>("pan");
+  const [patternId, setPatternId] = useState("");
   const canvasRef = useRef<GridHandle>(null);
+  const pattern = PATTERNS.find((p) => p.id === patternId) ?? null;
 
   const { connected, sendCells } = useEngineSocket({
     onStatus: (s) => {
@@ -65,11 +68,14 @@ export default function App() {
           colors={COLORS}
           onFps={setFps}
           tool={tool}
+          pattern={pattern}
           onPaintCells={sendCells}
         />
         <div className="overlay-hint">
           {tool === "draw"
-            ? "click to toggle · drag to paint · shift-drag to erase · right-drag to pan"
+            ? pattern
+              ? `click to stamp ${pattern.name.toLowerCase()} · drag to pan · scroll to zoom`
+              : "click to toggle · drag to paint · shift-drag to erase · right-drag to pan"
             : "drag to pan · scroll to zoom"}
         </div>
       </main>
@@ -82,6 +88,8 @@ export default function App() {
           setBusy={setBusy}
           tool={tool}
           setTool={setTool}
+          patternId={patternId}
+          setPatternId={setPatternId}
         />
         {error && <div className="error-banner">⚠ {error}</div>}
       </aside>
