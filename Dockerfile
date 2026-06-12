@@ -12,7 +12,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     -o /out/engined ./cmd/engined \
     && mkdir -p /out/data
 
-FROM --platform=$BUILDPLATFORM node:24-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf AS node-builder
+FROM --platform=$BUILDPLATFORM node:26-slim@sha256:95a34da32a840bd9b3b09a5b773591c16923e350174b1c50e1200c75bf15eaa9 AS node-builder
 WORKDIR /app
 COPY ui/package.json ui/package-lock.json ./
 RUN npm ci
