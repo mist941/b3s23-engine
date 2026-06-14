@@ -13,7 +13,9 @@ survives restarts.
 
 ## Demo
 
-<!-- demo GIF / screenshots -->
+![B3S23 Engine — drawing cells, stamping patterns and streaming the live simulation](https://raw.githubusercontent.com/mist941/b3s23-engine/main/docs/demo.gif)
+
+<sub>Sped up ~12× from a live session.</sub>
 
 ## Features
 
