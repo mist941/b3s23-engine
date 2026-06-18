@@ -12,7 +12,7 @@ jobs:
       run:
         working-directory: engine
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-go@v6
         with:
@@ -40,7 +40,7 @@ jobs:
       run:
         working-directory: ui
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v6
         with:
@@ -57,7 +57,7 @@ jobs:
   hadolint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: hadolint/hadolint-action@v3.3.0
         with:
